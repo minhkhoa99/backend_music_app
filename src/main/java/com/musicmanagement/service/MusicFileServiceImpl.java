@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -186,45 +187,45 @@ public class MusicFileServiceImpl implements MusicFileService {
         log.info("Uploading music file: {}", file.getOriginalFilename());
 
         try {
-            // Validate file
+            // 1. Validate file
             fileUtil.validateMusicFile(file);
 
-            // Save file
+            // 2. Save file to disk
             String filePath = fileUtil.saveMusicFile(file, uploadDir);
-
-            // Extract metadata
+            
+            // 3. Extract metadata
             var metadata = fileUtil.extractMetadata(filePath);
 
-            // Set file info
-            musicFileDTO.setFilePath(filePath);
-            musicFileDTO.setFileType(fileUtil.getFileExtension(file.getOriginalFilename()));
-            musicFileDTO.setFileSize(file.getSize());
+            // 4. Tạo fileCode unique (UUID)
+            String fileCode = UUID.randomUUID().toString();
+            
+            // 5. Get file info
+            String fileType = fileUtil.getFileExtension(file.getOriginalFilename());
+            Long fileSize = file.getSize();
+            Integer duration = metadata.get("duration") != null ? (Integer) metadata.get("duration") : null;
+            
+            // 6. Tạo download link
+            String downloadLink = "/api/music-files/download/" + fileCode;
 
-            // Set metadata if not provided
-            if (musicFileDTO.getDuration() == null && metadata.get("duration") != null) {
-                musicFileDTO.setDuration((Integer) metadata.get("duration"));
+            // 7. Tạo response DTO (KHÔNG lưu database)
+            MusicFileDTO response = new MusicFileDTO();
+            response.setFileCode(fileCode);
+            response.setFilePath(filePath);
+            response.setFileType(fileType);
+            response.setFileSize(fileSize);
+            response.setDuration(duration);
+            response.setDownloadLink(downloadLink);
+            
+            // Set thêm thông tin từ metadata nếu có
+            if (metadata.get("artist") != null) {
+                response.setArtist((String) metadata.get("artist"));
             }
-            if (musicFileDTO.getArtist() == null && metadata.get("artist") != null) {
-                musicFileDTO.setArtist((String) metadata.get("artist"));
-            }
-            if (musicFileDTO.getAlbum() == null && metadata.get("album") != null) {
-                musicFileDTO.setAlbum((String) metadata.get("album"));
+            if (metadata.get("album") != null) {
+                response.setAlbum((String) metadata.get("album"));
             }
 
-            // Create music file and get the saved entity with ID
-            MusicFileDTO savedFile = createMusicFile(musicFileDTO);
-            
-            // Generate download link after file is saved (now we have the ID)
-            String downloadLink = generateDownloadLink(savedFile.getId());
-            savedFile.setDownloadLink(downloadLink);
-            
-            // Update the entity with download link
-            MusicFile musicFile = musicFileRepository.findById(savedFile.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Music file not found"));
-            musicFile.setDownloadLink(downloadLink);
-            musicFileRepository.save(musicFile);
-            
-            return savedFile;
+            log.info("File uploaded successfully: {}", fileCode);
+            return response;
 
         } catch (IOException e) {
             log.error("Failed to upload music file", e);

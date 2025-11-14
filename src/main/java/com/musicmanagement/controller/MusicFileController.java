@@ -25,6 +25,8 @@ import org.springframework.http.HttpHeaders;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * REST Controller cho MusicFile
@@ -50,32 +52,16 @@ public class MusicFileController {
     }
 
     /**
-     * Upload file nhạc
+     * Upload file nhạc (chỉ lưu file vật lý, không lưu database)
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload file nhạc")
+    @Operation(summary = "Upload file nhạc và trả về thông tin file")
     public ResponseEntity<MusicFileDTO> uploadMusicFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("fileCode") String fileCode,
-            @RequestParam("fileName") String fileName,
-            @RequestParam(value = "genreId", required = false) Long genreId,
-            @RequestParam(value = "artist", required = false) String artist,
-            @RequestParam(value = "album", required = false) String album,
-            @RequestParam(value = "releaseYear", required = false) Integer releaseYear,
-            @RequestParam(value = "description", required = false) String description) {
+            @RequestParam("file") MultipartFile file) {
 
-        log.info("REST request to upload music file: {}", fileName);
+        log.info("REST request to upload music file: {}", file.getOriginalFilename());
 
-        MusicFileDTO musicFileDTO = new MusicFileDTO();
-        musicFileDTO.setFileCode(fileCode);
-        musicFileDTO.setFileName(fileName);
-        musicFileDTO.setGenreId(genreId);
-        musicFileDTO.setArtist(artist);
-        musicFileDTO.setAlbum(album);
-        musicFileDTO.setReleaseYear(releaseYear);
-        musicFileDTO.setDescription(description);
-
-        MusicFileDTO result = musicFileService.uploadMusicFile(file, musicFileDTO);
+        MusicFileDTO result = musicFileService.uploadMusicFile(file, null);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
@@ -217,10 +203,10 @@ public class MusicFileController {
     }
 
     /**
-     * Download file nhạc
+     * Download file nhạc theo ID
      */
     @GetMapping("/{id}/download")
-    @Operation(summary = "Download file nhạc")
+    @Operation(summary = "Download file nhạc theo ID")
     public ResponseEntity<Resource> downloadMusicFile(@PathVariable Long id) {
         log.info("REST request to download music file with ID: {}", id);
         
@@ -242,6 +228,36 @@ public class MusicFileController {
             }
         } catch (Exception e) {
             log.error("Error downloading file", e);
+            throw new RuntimeException("Error downloading file: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Download file nhạc theo fileCode (UUID)
+     */
+    @GetMapping("/download/{fileCode}")
+    @Operation(summary = "Download file nhạc theo fileCode")
+    public ResponseEntity<Resource> downloadMusicFileByCode(@PathVariable String fileCode) {
+        log.info("REST request to download music file with fileCode: {}", fileCode);
+        
+        try {
+            MusicFileDTO musicFile = musicFileService.getMusicFileByCode(fileCode);
+            Path filePath = Paths.get(musicFile.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = "audio/" + musicFile.getFileType();
+                
+                return ResponseEntity.ok()
+                        .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, 
+                                "inline; filename=\"" + fileCode + "." + musicFile.getFileType() + "\"")
+                        .body(resource);
+            } else {
+                throw new ResourceNotFoundException("File not found: " + musicFile.getFilePath());
+            }
+        } catch (Exception e) {
+            log.error("Error downloading file by code", e);
             throw new RuntimeException("Error downloading file: " + e.getMessage());
         }
     }
