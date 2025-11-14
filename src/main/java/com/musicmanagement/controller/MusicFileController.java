@@ -3,6 +3,7 @@ package com.musicmanagement.controller;
 import com.musicmanagement.dto.MusicFileDTO;
 import com.musicmanagement.dto.ReportDTO;
 import com.musicmanagement.service.MusicFileService;
+import com.musicmanagement.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +18,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -208,6 +214,36 @@ public class MusicFileController {
         log.info("REST request to get music files by release year: {}", year);
         Page<MusicFileDTO> result = musicFileService.getMusicFilesByReleaseYear(year, pageable);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Download file nhạc
+     */
+    @GetMapping("/{id}/download")
+    @Operation(summary = "Download file nhạc")
+    public ResponseEntity<Resource> downloadMusicFile(@PathVariable Long id) {
+        log.info("REST request to download music file with ID: {}", id);
+        
+        try {
+            MusicFileDTO musicFile = musicFileService.getMusicFileById(id);
+            Path filePath = Paths.get(musicFile.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = "application/octet-stream";
+                
+                return ResponseEntity.ok()
+                        .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, 
+                                "attachment; filename=\"" + musicFile.getFileName() + "." + musicFile.getFileType() + "\"")
+                        .body(resource);
+            } else {
+                throw new ResourceNotFoundException("File not found: " + musicFile.getFilePath());
+            }
+        } catch (Exception e) {
+            log.error("Error downloading file", e);
+            throw new RuntimeException("Error downloading file: " + e.getMessage());
+        }
     }
 }
 

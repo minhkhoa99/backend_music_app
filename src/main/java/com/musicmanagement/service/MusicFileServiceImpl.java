@@ -41,6 +41,12 @@ public class MusicFileServiceImpl implements MusicFileService {
     @Value("${app.thumbnail.dir}")
     private String thumbnailDir;
 
+    @Value("${server.port}")
+    private String serverPort;
+
+    @Value("${app.base.url:http://localhost}")
+    private String baseUrl;
+
     @Override
     public MusicFileDTO createMusicFile(MusicFileDTO musicFileDTO) {
         log.info("Creating new music file with code: {}", musicFileDTO.getFileCode());
@@ -205,7 +211,20 @@ public class MusicFileServiceImpl implements MusicFileService {
                 musicFileDTO.setAlbum((String) metadata.get("album"));
             }
 
-            return createMusicFile(musicFileDTO);
+            // Create music file and get the saved entity with ID
+            MusicFileDTO savedFile = createMusicFile(musicFileDTO);
+            
+            // Generate download link after file is saved (now we have the ID)
+            String downloadLink = generateDownloadLink(savedFile.getId());
+            savedFile.setDownloadLink(downloadLink);
+            
+            // Update the entity with download link
+            MusicFile musicFile = musicFileRepository.findById(savedFile.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Music file not found"));
+            musicFile.setDownloadLink(downloadLink);
+            musicFileRepository.save(musicFile);
+            
+            return savedFile;
 
         } catch (IOException e) {
             log.error("Failed to upload music file", e);
@@ -358,6 +377,13 @@ public class MusicFileServiceImpl implements MusicFileService {
                 .orElseThrow(() -> new ResourceNotFoundException("Genre not found with id: " + dto.getGenreId()));
             musicFile.setGenre(genre);
         }
+    }
+
+    /**
+     * Generate download link for music file
+     */
+    private String generateDownloadLink(Long musicFileId) {
+        return String.format("%s:%s/api/music-files/%d/download", baseUrl, serverPort, musicFileId);
     }
 }
 
