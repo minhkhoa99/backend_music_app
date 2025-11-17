@@ -59,6 +59,9 @@ public class MusicFile {
     @Column(name = "release_year")
     private Integer releaseYear; // Năm phát hành
 
+    @Column(name = "age_range", length = 50)
+    private String ageRange; // Lứa tuổi người nghe phù hợp (VD: "18+", "40+", "Người cao tuổi")
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

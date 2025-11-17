@@ -69,6 +69,16 @@ public interface MusicFileService {
     Page<MusicFileDTO> getMusicFilesByReleaseYear(Integer year, Pageable pageable);
 
     /**
+     * Lọc file nhạc theo lứa tuổi người nghe
+     */
+    Page<MusicFileDTO> getMusicFilesByAgeRange(String ageRange, Pageable pageable);
+
+    /**
+     * Lấy danh sách file nhạc dành cho người trên 40 tuổi
+     */
+    List<MusicFileDTO> getMusicFilesForAge40Plus();
+
+    /**
      * Upload file nhạc
      */
     MusicFileDTO uploadMusicFile(MultipartFile file, MusicFileDTO musicFileDTO);

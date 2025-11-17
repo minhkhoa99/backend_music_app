@@ -56,6 +56,19 @@ public interface MusicFileRepository extends JpaRepository<MusicFile, Long> {
     Page<MusicFile> findByReleaseYear(Integer releaseYear, Pageable pageable);
 
     /**
+     * Tìm file nhạc theo lứa tuổi người nghe (age range)
+     * VD: "40+", "Người cao tuổi", "18+"
+     */
+    @Query("SELECT m FROM MusicFile m WHERE LOWER(m.ageRange) LIKE LOWER(CONCAT('%', :ageRange, '%'))")
+    Page<MusicFile> findByAgeRangeContaining(@Param("ageRange") String ageRange, Pageable pageable);
+
+    /**
+     * Tìm file nhạc dành cho người trên 40 tuổi
+     */
+    @Query("SELECT m FROM MusicFile m WHERE m.ageRange IN ('40+', '40-60', '50+', '60+', 'Người cao tuổi')")
+    List<MusicFile> findMusicFilesForAge40Plus();
+
+    /**
      * Tìm file nhạc có năm phát hành nhỏ hơn một năm nhất định (để tìm file cũ)
      */
     @Query("SELECT m FROM MusicFile m WHERE m.releaseYear <= :year ORDER BY m.releaseYear ASC")

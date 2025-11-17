@@ -203,6 +203,30 @@ public class MusicFileController {
     }
 
     /**
+     * Lọc file nhạc theo độ tuổi người nghe
+     */
+    @GetMapping("/filter/age-range")
+    @Operation(summary = "Lọc file nhạc theo độ tuổi người nghe (ageRange)")
+    public ResponseEntity<Page<MusicFileDTO>> getMusicFilesByAgeRange(
+            @RequestParam String ageRange,
+            @PageableDefault(size = 20) Pageable pageable) {
+        log.info("REST request to get music files by age range: {}", ageRange);
+        Page<MusicFileDTO> result = musicFileService.getMusicFilesByAgeRange(ageRange, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Lấy danh sách file nhạc dành cho người trên 40 tuổi
+     */
+    @GetMapping("/filter/for-age-40-plus")
+    @Operation(summary = "Lấy file nhạc dành cho người nghe trên 40 tuổi")
+    public ResponseEntity<List<MusicFileDTO>> getMusicFilesForAge40Plus() {
+        log.info("REST request to get music files for listeners over 40 years old");
+        List<MusicFileDTO> result = musicFileService.getMusicFilesForAge40Plus();
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * Download file nhạc theo ID
      */
     @GetMapping("/{id}/download")

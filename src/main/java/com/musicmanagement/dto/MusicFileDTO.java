@@ -50,6 +50,8 @@ public class MusicFileDTO {
 
     private Integer releaseYear;
 
+    private String ageRange; // Lứa tuổi người nghe phù hợp
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

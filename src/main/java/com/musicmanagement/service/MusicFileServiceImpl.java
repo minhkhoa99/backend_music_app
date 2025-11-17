@@ -183,6 +183,25 @@ public class MusicFileServiceImpl implements MusicFileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<MusicFileDTO> getMusicFilesByAgeRange(String ageRange, Pageable pageable) {
+        log.debug("Fetching music files by age range: {}", ageRange);
+
+        return musicFileRepository.findByAgeRangeContaining(ageRange, pageable)
+            .map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MusicFileDTO> getMusicFilesForAge40Plus() {
+        log.debug("Fetching music files for listeners over 40 years old");
+
+        return musicFileRepository.findMusicFilesForAge40Plus().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public MusicFileDTO uploadMusicFile(MultipartFile file, MusicFileDTO musicFileDTO) {
         log.info("Uploading music file: {}", file.getOriginalFilename());
 
@@ -329,6 +348,7 @@ public class MusicFileServiceImpl implements MusicFileService {
         dto.setDuration(musicFile.getDuration());
         dto.setFileSize(musicFile.getFileSize());
         dto.setReleaseYear(musicFile.getReleaseYear());
+        dto.setAgeRange(musicFile.getAgeRange());
         dto.setCreatedAt(musicFile.getCreatedAt());
         dto.setUpdatedAt(musicFile.getUpdatedAt());
         dto.setAge(musicFile.getAge());
@@ -372,6 +392,7 @@ public class MusicFileServiceImpl implements MusicFileService {
         musicFile.setDuration(dto.getDuration());
         musicFile.setFileSize(dto.getFileSize());
         musicFile.setReleaseYear(dto.getReleaseYear());
+        musicFile.setAgeRange(dto.getAgeRange());
 
         if (dto.getGenreId() != null) {
             MusicGenre genre = genreRepository.findById(dto.getGenreId())
