@@ -66,6 +66,7 @@ spring.datasource.password=your_password
 ```bash
 mvn clean install
 mvn spring-boot:run
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"; mvn spring-boot:run
 ```
 
 Ứng dụng sẽ chạy tại: `http://localhost:3005`
