@@ -29,30 +29,6 @@ public class FileUtil {
     private String allowedFileTypes;
 
     private final Tika tika = new Tika();
-
-    /**
-     * Lưu file nhạc
-     */
-    public String saveMusicFile(MultipartFile file, String uploadDir) throws IOException {
-        // Tạo thư mục nếu chưa tồn tại
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // Tạo tên file unique
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = getFileExtension(originalFilename);
-        String newFilename = UUID.randomUUID().toString() + "." + fileExtension;
-
-        // Lưu file
-        Path filePath = uploadPath.resolve(newFilename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        log.info("Saved music file: {}", filePath);
-        return filePath.toString();
-    }
-
     /**
      * Lưu file nhạc với tên file tùy custom
      */

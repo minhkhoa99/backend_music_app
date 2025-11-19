@@ -84,11 +84,6 @@ public interface MusicFileService {
     MusicFileDTO uploadMusicFile(MultipartFile file, MusicFileDTO musicFileDTO);
 
     /**
-     * Upload thumbnail
-     */
-    String uploadThumbnail(Long musicFileId, MultipartFile thumbnail);
-
-    /**
      * Lấy danh sách file nhạc cũ hơn số năm chỉ định (ví dụ >40 năm)
      */
     List<MusicFileDTO> getOldMusicFiles(int minAge);

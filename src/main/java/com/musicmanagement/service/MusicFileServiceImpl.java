@@ -262,33 +262,6 @@ public class MusicFileServiceImpl implements MusicFileService {
     }
 
     @Override
-    public String uploadThumbnail(Long musicFileId, MultipartFile thumbnail) {
-        log.info("Uploading thumbnail for music file ID: {}", musicFileId);
-
-        MusicFile musicFile = musicFileRepository.findById(musicFileId)
-            .orElseThrow(() -> new ResourceNotFoundException("Music file not found with id: " + musicFileId));
-
-        try {
-            // Delete old thumbnail if exists
-            if (musicFile.getThumbnailPath() != null) {
-                fileUtil.deleteFile(musicFile.getThumbnailPath());
-            }
-
-            // Save new thumbnail
-            String thumbnailPath = fileUtil.saveImage(thumbnail, thumbnailDir);
-            musicFile.setThumbnailPath(thumbnailPath);
-            musicFileRepository.save(musicFile);
-
-            log.info("Uploaded thumbnail for music file ID: {}", musicFileId);
-            return thumbnailPath;
-
-        } catch (IOException e) {
-            log.error("Failed to upload thumbnail", e);
-            throw new RuntimeException("Failed to upload thumbnail: " + e.getMessage());
-        }
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public List<MusicFileDTO> getOldMusicFiles(int minAge) {
         log.debug("Fetching music files older than {} years", minAge);

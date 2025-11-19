@@ -66,20 +66,6 @@ public class MusicFileController {
     }
 
     /**
-     * Upload thumbnail cho file nhạc
-     */
-    @PostMapping(value = "/{id}/thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload thumbnail cho file nhạc")
-    public ResponseEntity<String> uploadThumbnail(
-            @PathVariable Long id,
-            @RequestParam("thumbnail") MultipartFile thumbnail) {
-
-        log.info("REST request to upload thumbnail for music file ID: {}", id);
-        String thumbnailPath = musicFileService.uploadThumbnail(id, thumbnail);
-        return ResponseEntity.ok(thumbnailPath);
-    }
-
-    /**
      * Cập nhật file nhạc
      */
     @PutMapping("/{id}")
