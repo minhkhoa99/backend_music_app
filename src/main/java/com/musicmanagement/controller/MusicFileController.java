@@ -253,8 +253,8 @@ public class MusicFileController {
                 
                 return ResponseEntity.ok()
                         .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, 
-                                "inline; filename=\"" + fileCode + "." + musicFile.getFileType() + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                "attachment; filename=\"" + fileCode + "." + musicFile.getFileType() + "\"")
                         .body(resource);
             } else {
                 throw new ResourceNotFoundException("File not found or not readable: " + musicFile.getFilePath());
