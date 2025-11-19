@@ -227,36 +227,6 @@ public class MusicFileController {
     }
 
     /**
-     * Download file nhạc theo ID
-     */
-    @GetMapping("/{id}/download")
-    @Operation(summary = "Download file nhạc theo ID")
-    public ResponseEntity<Resource> downloadMusicFile(@PathVariable Long id) {
-        log.info("REST request to download music file with ID: {}", id);
-        
-        try {
-            MusicFileDTO musicFile = musicFileService.getMusicFileById(id);
-            Path filePath = Paths.get(musicFile.getFilePath());
-            Resource resource = new UrlResource(filePath.toUri());
-            
-            if (resource.exists() && resource.isReadable()) {
-                String contentType = "application/octet-stream";
-                
-                return ResponseEntity.ok()
-                        .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, 
-                                "attachment; filename=\"" + musicFile.getFileName() + "." + musicFile.getFileType() + "\"")
-                        .body(resource);
-            } else {
-                throw new ResourceNotFoundException("File not found: " + musicFile.getFilePath());
-            }
-        } catch (Exception e) {
-            log.error("Error downloading file", e);
-            throw new RuntimeException("Error downloading file: " + e.getMessage());
-        }
-    }
-
-    /**
      * Download file nhạc theo fileCode (UUID)
      */
     @GetMapping("/download/{fileCode}")
@@ -267,9 +237,18 @@ public class MusicFileController {
         try {
             MusicFileDTO musicFile = musicFileService.getMusicFileByCode(fileCode);
             Path filePath = Paths.get(musicFile.getFilePath());
-            Resource resource = new UrlResource(filePath.toUri());
+            log.info("Attempting to load file from path: {}", filePath.toAbsolutePath().toString());
             
-            if (resource.exists() && resource.isReadable()) {
+            // Check if file exists using Files class
+            boolean fileExists = java.nio.file.Files.exists(filePath);
+            boolean fileReadable = java.nio.file.Files.isReadable(filePath);
+            log.info("Files.exists: {}, Files.isReadable: {}", fileExists, fileReadable);
+            
+            Resource resource = new UrlResource(filePath.toUri());
+            log.info("File path: {}", filePath.toAbsolutePath().toString());
+            log.info("Resource exists: {}, readable: {}", resource.exists(), resource.isReadable());
+            
+            if (fileExists && fileReadable) {
                 String contentType = "audio/" + musicFile.getFileType();
                 
                 return ResponseEntity.ok()
@@ -278,7 +257,7 @@ public class MusicFileController {
                                 "inline; filename=\"" + fileCode + "." + musicFile.getFileType() + "\"")
                         .body(resource);
             } else {
-                throw new ResourceNotFoundException("File not found: " + musicFile.getFilePath());
+                throw new ResourceNotFoundException("File not found or not readable: " + musicFile.getFilePath());
             }
         } catch (Exception e) {
             log.error("Error downloading file by code", e);

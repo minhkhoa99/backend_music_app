@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +43,11 @@ public class MusicFileServiceImpl implements MusicFileService {
     @Value("${app.thumbnail.dir}")
     private String thumbnailDir;
 
+    public void logConfiguration() {
+        log.info("Upload directory configured as: {}", uploadDir);
+        log.info("Thumbnail directory configured as: {}", thumbnailDir);
+    }
+
     @Value("${server.port}")
     private String serverPort;
 
@@ -50,6 +56,7 @@ public class MusicFileServiceImpl implements MusicFileService {
 
     @Override
     public MusicFileDTO createMusicFile(MusicFileDTO musicFileDTO) {
+        logConfiguration();
         log.info("Creating new music file with code: {}", musicFileDTO.getFileCode());
 
         if (musicFileRepository.existsByFileCode(musicFileDTO.getFileCode())) {
@@ -209,15 +216,17 @@ public class MusicFileServiceImpl implements MusicFileService {
             // 1. Validate file
             fileUtil.validateMusicFile(file);
 
-            // 2. Save file to disk
-            String filePath = fileUtil.saveMusicFile(file, uploadDir);
-            
-            // 3. Extract metadata
-            var metadata = fileUtil.extractMetadata(filePath);
-
-            // 4. Tạo fileCode unique (UUID)
+            // 2. Tạo fileCode unique (UUID) - dùng chung cho cả download link và filename
             String fileCode = UUID.randomUUID().toString();
             
+            // 3. Save file to disk với tên file là fileCode
+            String absoluteUploadDir = Paths.get(uploadDir).toAbsolutePath().toString();
+            
+            String filePath = fileUtil.saveMusicFileWithCustomName(file, absoluteUploadDir, fileCode);
+            
+            // 4. Extract metadata
+            var metadata = fileUtil.extractMetadata(filePath);
+
             // 5. Get file info
             String fileType = fileUtil.getFileExtension(file.getOriginalFilename());
             Long fileSize = file.getSize();

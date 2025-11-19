@@ -54,6 +54,30 @@ public class FileUtil {
     }
 
     /**
+     * Lưu file nhạc với tên file tùy custom
+     */
+    public String saveMusicFileWithCustomName(MultipartFile file, String uploadDir, String customName) throws IOException {
+        // Tạo thư mục nếu chưa tồn tại
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // Sử dụng tên file tùy chỉnh
+        String fileExtension = getFileExtension(file.getOriginalFilename());
+        String filename = customName + "." + fileExtension;
+
+        // Lưu file
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        log.info("Saved music file with custom name: {}", filePath);
+        log.info("Upload directory: {}", uploadDir);
+        log.info("File path absolute: {}", filePath.toAbsolutePath());
+        return filePath.toAbsolutePath().toString();
+    }
+
+    /**
      * Lưu hình ảnh (thumbnail)
      */
     public String saveImage(MultipartFile file, String uploadDir) throws IOException {
